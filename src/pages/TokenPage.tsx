@@ -5,7 +5,7 @@ import { TokenChart, ChartDataPoint } from "@/components/TokenChart";
 import { TradingPanel } from "@/components/TradingPanel";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { EnhancedToken, PairFilterResult } from "@codex-data/sdk/dist/sdk/generated/graphql";
+import { EnhancedToken, PairFilterResult, PairRankingAttribute, RankingDirection } from "@codex-data/sdk/dist/sdk/generated/graphql";
 
 type TokenEvent = {
   id: string;
@@ -55,7 +55,7 @@ export default function TokenPage() {
             resolution: '30'
           }),
           codexClient.queries.getTokenEvents({ query: { networkId: networkIdNum, address: tokenId }, limit: 50 }),
-          codexClient.queries.filterPairs({ filters: { tokenAddress: [tokenId] }, limit: 50 }),
+          codexClient.queries.filterPairs({ filters: { tokenAddress: [tokenId] }, rankings: [{ attribute: PairRankingAttribute.VolumeUsd24, direction: RankingDirection.Desc }], limit: 50 }),
         ]);
 
         const detailsResult = results[0];
@@ -242,11 +242,6 @@ export default function TokenPage() {
               {pairs ? (
                 <div className="space-y-2">
                   {pairs
-                    .sort((a, b) => {
-                      const volumeA = parseFloat(a.volumeUSD24 || '0');
-                      const volumeB = parseFloat(b.volumeUSD24 || '0');
-                      return volumeB - volumeA; // Sort by volume descending
-                    })
                     .map((pair) => (
                       <div className="text-sm" key={pair.pair?.id ?? Math.random().toString(36).substring(2, 15)}>
                         <div className="flex justify-between items-start">
