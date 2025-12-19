@@ -5,7 +5,7 @@ import { TokenChart, ChartDataPoint } from "@/components/TokenChart";
 import { TradingPanel } from "@/components/TradingPanel";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { EnhancedToken } from "@codex-data/sdk/dist/sdk/generated/graphql";
+import { EnhancedToken, PairFilterResult } from "@codex-data/sdk/dist/sdk/generated/graphql";
 
 type TokenEvent = {
   id: string;
@@ -21,6 +21,7 @@ export default function TokenPage() {
   const networkIdNum = parseInt(networkId || '', 10);
 
   const [details, setDetails] = useState<EnhancedToken | undefined>(undefined);
+  const [pairs, setPairs] = useState<PairFilterResult[]>([]);
   const [bars, setBars] = useState<ChartDataPoint[]>([]);
   const [events, setEvents] = useState<TokenEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,11 +55,13 @@ export default function TokenPage() {
             resolution: '30'
           }),
           codexClient.queries.getTokenEvents({ query: { networkId: networkIdNum, address: tokenId }, limit: 50 }),
+          codexClient.queries.filterPairs({ filters: { tokenAddress: [tokenId] }, limit: 50 }),
         ]);
 
         const detailsResult = results[0];
         const barsResult = results[1];
         const eventsResult = results[2];
+        const pairsResult = results[3];
 
         if (detailsResult.status === 'fulfilled') {
           setDetails(detailsResult.value.token);
@@ -97,6 +100,10 @@ export default function TokenPage() {
               };
             });
           setEvents(tokenEvents);
+        }
+
+        if (pairsResult.status === 'fulfilled' && pairsResult.value.filterPairs?.results) {
+          setPairs(pairsResult.value.filterPairs.results.filter(pair => pair != null) as PairFilterResult[]);
         }
       } catch (err) {
         console.error("Error fetching token data:", err);
@@ -221,6 +228,26 @@ export default function TokenPage() {
                     </p>
                   )}
                 </>
+              ) : (
+                <p className="text-muted-foreground">Token details could not be loaded.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center space-x-4">
+              <CardTitle>Pools</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {pairs ? (
+                <div className="space-y-2">
+                  {pairs.map((pair) => (
+                    <p className="text-sm" key={pair.pair?.id ?? Math.random().toString(36).substring(2, 15)}>
+                      <strong className="text-muted-foreground">{pair.exchange?.name || 'Unknown Exchange'}: </strong>
+                      <span className="font-mono block break-all" title={pair.pair?.address || ''}>{pair.pair?.address || ''}</span>
+                    </p>
+                  ))}
+                </div>
               ) : (
                 <p className="text-muted-foreground">Token details could not be loaded.</p>
               )}

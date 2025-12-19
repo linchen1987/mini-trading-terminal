@@ -107,6 +107,7 @@ export default function NetworkPage() {
                     <th className="p-2 text-left font-semibold w-[60px]">Icon</th>
                     <th className="p-2 text-left font-semibold flex-1">Name</th>
                     <th className="p-2 text-left font-semibold w-1/5">Symbol</th>
+                    <th className="p-2 text-left font-semibold flex-1">Exchanges</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -136,6 +137,11 @@ export default function NetworkPage() {
                          <Link to={`/networks/${networkId}/tokens/${item.token?.address}`} className="block w-full h-full">
                            {item.token?.symbol || "-"}
                          </Link>  
+                      </td>
+                      <td className="p-2 truncate">
+                        <Link to={`/networks/${networkId}/tokens/${item.token?.address}`} className="block w-full h-full">
+                          {item.token?.exchanges?.map((exchange) => exchange.name).join(", ") || "-"}
+                        </Link>
                       </td>
                     </tr>
                   ))}
